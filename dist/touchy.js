@@ -1,5 +1,6 @@
 (function() {
-  var Swipe, Touchy, trx, u;
+  var Swipe, Touchy, trx, u,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   trx = require('tiny-rx');
 
@@ -9,20 +10,18 @@
 
   Touchy = (function() {
     function Touchy(mainElement, swipeContainer, scrollingClass) {
+      var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, timeoutId, touchHistory;
       this.mainElement = mainElement != null ? mainElement : '.touchy';
       this.swipeContainer = swipeContainer != null ? swipeContainer : '.swipe';
       this.scrollingClass = scrollingClass != null ? scrollingClass : 'scroll';
-    }
-
-    Touchy.prototype.bindEvents = function() {
-      var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, tapEvents, timeoutId, touchEvents, touchHistory;
-      this.touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
+      this.bindEvents = __bind(this.bindEvents, this);
+      this.touchEvents = trx.createStream();
       self = this;
       scrollAnimation = void 0;
       gestureLock = void 0;
       timeoutId = void 0;
-      swiper = new Swipe(this.swipeContainer);
-      this.tapEvents = tapEvents = touchEvents.filter(function(e) {
+      this.swiper = swiper = new Swipe();
+      this.tapEvents = this.touchEvents.filter(function(e) {
         var result;
         result = e.type === 'touchend' && gestureLock && gestureLock.type === 'tapstart';
         if (result) {
@@ -30,8 +29,8 @@
         }
         return result;
       });
-      lastTouchEvent = touchEvents.createHistory(1);
-      touchEvents.subscribe(function(e) {
+      lastTouchEvent = this.touchEvents.createHistory(1);
+      this.touchEvents.subscribe(function(e) {
         if (e.type === 'touchstart') {
           return timeoutId = setTimeout(function() {
             var lastEvent, moveX, moveY;
@@ -57,12 +56,9 @@
               };
             }
           }, 100);
-        } else if (e.type === 'touchend' && !gestureLock) {
-          clearInterval(timeoutId);
-          return tapEvents.publish(e);
         }
       });
-      touchHistory = touchEvents.createHistory(6);
+      touchHistory = this.touchEvents.createHistory(6);
       touchHistory.filter(function(events) {
         return events.length > 1;
       });
@@ -81,7 +77,6 @@
           if ($target.className.indexOf(self.scrollingClass) < 0) {
             $target = u.getParent($target, 'className', self.scrollingClass);
           }
-          console.log($target, self.scrollingClass, u.get(events, -1));
           if ($target) {
             $target.scrollTop += distance;
           }
@@ -122,9 +117,14 @@
         };
         return requestAnimationFrame(scrollAnimation);
       });
-      return easeOutSwipe.subscribe(function(e) {
+      easeOutSwipe.subscribe(function(e) {
         return swiper.letGo();
       });
+    }
+
+    Touchy.prototype.bindEvents = function() {
+      this.swiper.init(this.swipeContainer);
+      return this.touchEvents.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
     };
 
     return Touchy;
@@ -132,5 +132,9 @@
   })();
 
   module.exports = Touchy;
+
+  if (window) {
+    window.Touchy = Touchy;
+  }
 
 }).call(this);

@@ -23,17 +23,14 @@ Buffer.poolSize = 8192
  *   === false   Use Object implementation (compatible down to IE6)
  */
 Buffer._useTypedArrays = (function () {
-   // Detect if browser supports Typed Arrays. Supported browsers are IE 10+,
-   // Firefox 4+, Chrome 7+, Safari 5.1+, Opera 11.6+, iOS 4.2+.
-  if (typeof Uint8Array !== 'function' || typeof ArrayBuffer !== 'function')
-    return false
-
-  // Does the browser support adding properties to `Uint8Array` instances? If
-  // not, then that's the same as no `Uint8Array` support. We need to be able to
-  // add all the node Buffer API methods.
-  // Bug in Firefox 4-29, now fixed: https://bugzilla.mozilla.org/show_bug.cgi?id=695438
+  // Detect if browser supports Typed Arrays. Supported browsers are IE 10+, Firefox 4+,
+  // Chrome 7+, Safari 5.1+, Opera 11.6+, iOS 4.2+. If the browser does not support adding
+  // properties to `Uint8Array` instances, then that's the same as no `Uint8Array` support
+  // because we need to be able to add all the node Buffer API methods. This is an issue
+  // in Firefox 4-29. Now fixed: https://bugzilla.mozilla.org/show_bug.cgi?id=695438
   try {
-    var arr = new Uint8Array(0)
+    var buf = new ArrayBuffer(0)
+    var arr = new Uint8Array(buf)
     arr.foo = function () { return 42 }
     return 42 === arr.foo() &&
         typeof arr.subarray === 'function' // Chrome 9-10 lack `subarray`
@@ -76,14 +73,14 @@ function Buffer (subject, encoding, noZero) {
   else if (type === 'string')
     length = Buffer.byteLength(subject, encoding)
   else if (type === 'object')
-    length = coerce(subject.length) // Assume object is an array
+    length = coerce(subject.length) // assume that object is array-like
   else
     throw new Error('First argument needs to be a number, array or string.')
 
   var buf
   if (Buffer._useTypedArrays) {
     // Preferred: Return an augmented `Uint8Array` instance for best performance
-    buf = augment(new Uint8Array(length))
+    buf = Buffer._augment(new Uint8Array(length))
   } else {
     // Fallback: Return THIS instance of Buffer (created by `new`)
     buf = this
@@ -92,9 +89,8 @@ function Buffer (subject, encoding, noZero) {
   }
 
   var i
-  if (Buffer._useTypedArrays && typeof Uint8Array === 'function' &&
-      subject instanceof Uint8Array) {
-    // Speed optimization -- use set if we're copying from a Uint8Array
+  if (Buffer._useTypedArrays && typeof subject.byteLength === 'number') {
+    // Speed optimization -- use set if we're copying from a typed array
     buf._set(subject)
   } else if (isArrayish(subject)) {
     // Treat array-ish objects as a byte array
@@ -397,7 +393,7 @@ Buffer.prototype.copy = function (target, target_start, start, end) {
     for (var i = 0; i < len; i++)
       target[i + target_start] = this[i + start]
   } else {
-    target._set(new Uint8Array(this.buffer, start, len), target_start)
+    target._set(this.subarray(start, start + len), target_start)
   }
 }
 
@@ -467,7 +463,7 @@ Buffer.prototype.slice = function (start, end) {
   end = clamp(end, len, len)
 
   if (Buffer._useTypedArrays) {
-    return augment(this.subarray(start, end))
+    return Buffer._augment(this.subarray(start, end))
   } else {
     var sliceLen = end - start
     var newBuf = new Buffer(sliceLen, undefined, true)
@@ -910,7 +906,7 @@ Buffer.prototype.inspect = function () {
  * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
  */
 Buffer.prototype.toArrayBuffer = function () {
-  if (typeof Uint8Array === 'function') {
+  if (typeof Uint8Array !== 'undefined') {
     if (Buffer._useTypedArrays) {
       return (new Buffer(this)).buffer
     } else {
@@ -935,9 +931,9 @@ function stringtrim (str) {
 var BP = Buffer.prototype
 
 /**
- * Augment the Uint8Array *instance* (not the class!) with Buffer methods
+ * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
  */
-function augment (arr) {
+Buffer._augment = function (arr) {
   arr._isBuffer = true
 
   // save reference to original Uint8Array get/set methods before overwriting
@@ -1116,8 +1112,8 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/..\\node_modules\\browserify\\node_modules\\buffer\\index.js","/..\\node_modules\\browserify\\node_modules\\buffer")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"base64-js":2,"buffer":1,"ieee754":3}],2:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer/index.js","/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"base64-js":2,"buffer":1,"ieee754":3}],2:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -1241,8 +1237,8 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	module.exports.fromByteArray = uint8ToBase64
 }())
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/..\\node_modules\\browserify\\node_modules\\buffer\\node_modules\\base64-js\\lib\\b64.js","/..\\node_modules\\browserify\\node_modules\\buffer\\node_modules\\base64-js\\lib")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1}],3:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib/b64.js","/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer/node_modules/base64-js/lib")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1}],3:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
@@ -1329,8 +1325,8 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/..\\node_modules\\browserify\\node_modules\\buffer\\node_modules\\ieee754\\index.js","/..\\node_modules\\browserify\\node_modules\\buffer\\node_modules\\ieee754")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1}],4:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js","/../node_modules/gulp-browserify/node_modules/browserify/node_modules/buffer/node_modules/ieee754")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1}],4:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 // shim for using process in browser
 
@@ -1393,8 +1389,8 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/..\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js","/..\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1}],5:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/../node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js","/../node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1}],5:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 
 /*
@@ -1582,6 +1578,7 @@ EventStream = (function(_super) {
 
   function EventStream() {
     this.merge = __bind(this.merge, this);
+    this.addDomEvent = __bind(this.addDomEvent, this);
     this.addEvent = __bind(this.addEvent, this);
     return EventStream.__super__.constructor.apply(this, arguments);
   }
@@ -1594,6 +1591,47 @@ EventStream = (function(_super) {
 
   EventStream.prototype.addEvent = function(eventCallback) {
     return eventCallback(this.publish);
+  };
+
+  EventStream.prototype.addDomEvent = function(eventNames, domNodes) {
+    var domNode, eventName, sNode, selected, self, _i, _len, _results;
+    assertNotNull(arguments);
+    if (!isArray(domNodes)) {
+      domNodes = [domNodes];
+    }
+    if (!isArray(eventNames)) {
+      eventNames = [eventNames];
+    }
+    self = this;
+    _results = [];
+    for (_i = 0, _len = domNodes.length; _i < _len; _i++) {
+      domNode = domNodes[_i];
+      if (isString(domNode)) {
+        selected = document.querySelectorAll(domNode);
+      } else {
+        selected = [domNode];
+      }
+      _results.push((function() {
+        var _j, _len1, _results1;
+        _results1 = [];
+        for (_j = 0, _len1 = selected.length; _j < _len1; _j++) {
+          sNode = selected[_j];
+          _results1.push((function() {
+            var _k, _len2, _results2;
+            _results2 = [];
+            for (_k = 0, _len2 = eventNames.length; _k < _len2; _k++) {
+              eventName = eventNames[_k];
+              _results2.push(addEventListener(sNode, eventName, function(e) {
+                return self.publish(e);
+              }));
+            }
+            return _results2;
+          })());
+        }
+        return _results1;
+      })());
+    }
+    return _results;
   };
 
   EventStream.prototype.merge = function(stream) {
@@ -1855,8 +1893,8 @@ if (typeof module !== "undefined" && module !== null) {
   window.trx = trx;
 }
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/..\\node_modules\\tiny-rx\\dist\\trx.js","/..\\node_modules\\tiny-rx\\dist")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1}],6:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/../node_modules/tiny-rx/dist/trx.js","/../node_modules/tiny-rx/dist")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1}],6:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 var Swiper, trx,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
@@ -1864,7 +1902,11 @@ var Swiper, trx,
 trx = require('tiny-rx');
 
 module.exports = Swiper = (function() {
-  function Swiper(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
+  function Swiper() {
+    this.letGo = __bind(this.letGo, this);
+  }
+
+  Swiper.prototype.init = function(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
     var i, self, slide, swipeDimensions, _i, _j, _len, _len1, _ref, _ref1;
     if (containerSelector == null) {
       containerSelector = '.swipe';
@@ -1876,7 +1918,6 @@ module.exports = Swiper = (function() {
       itemSelector = '.swipe-item';
     }
     this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
-    this.letGo = __bind(this.letGo, this);
     self = this;
     this.manualPosition = 0;
     this.swipe = document.querySelector(containerSelector);
@@ -1887,7 +1928,6 @@ module.exports = Swiper = (function() {
       slide = _ref[_i];
       this.slides.push(slide);
     }
-    console.log('swipe: ', this.swipe, 'swipeWrap: ', 'swipeItems: ', this.slides);
     if (!this.swipe || !this.swipeWrap || this.slides.length < 2) {
       throw new Error('swipe swipeWrap or swipeItems are not valid elements');
     }
@@ -1903,10 +1943,10 @@ module.exports = Swiper = (function() {
     this.slide();
     this.swipe.style.visibility = 'visible';
     this.positionContinuously();
-    trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
+    return trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
       return self.positionContinuously();
     });
-  }
+  };
 
   Swiper.prototype.prev = function() {
     if (this.currentIndex <= 0) {
@@ -2006,10 +2046,11 @@ module.exports = Swiper = (function() {
 })();
 
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/swipe.coffee","/")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1,"tiny-rx":5}],7:[function(require,module,exports){
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/swipe.coffee","/")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1,"tiny-rx":5}],7:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
-var Swipe, Touchy, trx, u;
+var Swipe, Touchy, trx, u,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 trx = require('tiny-rx');
 
@@ -2019,20 +2060,18 @@ u = require('./util');
 
 Touchy = (function() {
   function Touchy(mainElement, swipeContainer, scrollingClass) {
+    var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, timeoutId, touchHistory;
     this.mainElement = mainElement != null ? mainElement : '.touchy';
     this.swipeContainer = swipeContainer != null ? swipeContainer : '.swipe';
     this.scrollingClass = scrollingClass != null ? scrollingClass : 'scroll';
-  }
-
-  Touchy.prototype.bindEvents = function() {
-    var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, tapEvents, timeoutId, touchEvents, touchHistory;
-    this.touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
+    this.bindEvents = __bind(this.bindEvents, this);
+    this.touchEvents = trx.createStream();
     self = this;
     scrollAnimation = void 0;
     gestureLock = void 0;
     timeoutId = void 0;
-    swiper = new Swipe(this.swipeContainer);
-    this.tapEvents = tapEvents = touchEvents.filter(function(e) {
+    this.swiper = swiper = new Swipe();
+    this.tapEvents = this.touchEvents.filter(function(e) {
       var result;
       result = e.type === 'touchend' && gestureLock && gestureLock.type === 'tapstart';
       if (result) {
@@ -2040,8 +2079,8 @@ Touchy = (function() {
       }
       return result;
     });
-    lastTouchEvent = touchEvents.createHistory(1);
-    touchEvents.subscribe(function(e) {
+    lastTouchEvent = this.touchEvents.createHistory(1);
+    this.touchEvents.subscribe(function(e) {
       if (e.type === 'touchstart') {
         return timeoutId = setTimeout(function() {
           var lastEvent, moveX, moveY;
@@ -2067,12 +2106,9 @@ Touchy = (function() {
             };
           }
         }, 100);
-      } else if (e.type === 'touchend' && !gestureLock) {
-        clearInterval(timeoutId);
-        return tapEvents.publish(e);
       }
     });
-    touchHistory = touchEvents.createHistory(6);
+    touchHistory = this.touchEvents.createHistory(6);
     touchHistory.filter(function(events) {
       return events.length > 1;
     });
@@ -2091,7 +2127,6 @@ Touchy = (function() {
         if ($target.className.indexOf(self.scrollingClass) < 0) {
           $target = u.getParent($target, 'className', self.scrollingClass);
         }
-        console.log($target, self.scrollingClass, u.get(events, -1));
         if ($target) {
           $target.scrollTop += distance;
         }
@@ -2132,9 +2167,14 @@ Touchy = (function() {
       };
       return requestAnimationFrame(scrollAnimation);
     });
-    return easeOutSwipe.subscribe(function(e) {
+    easeOutSwipe.subscribe(function(e) {
       return swiper.letGo();
     });
+  }
+
+  Touchy.prototype.bindEvents = function() {
+    this.swiper.init(this.swipeContainer);
+    return this.touchEvents.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
   };
 
   return Touchy;
@@ -2143,9 +2183,13 @@ Touchy = (function() {
 
 module.exports = Touchy;
 
+if (window) {
+  window.Touchy = Touchy;
+}
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/touchy.coffee","/")
-},{"./swipe":6,"./util":8,"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1,"tiny-rx":5}],8:[function(require,module,exports){
+
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/touchy.coffee","/")
+},{"./swipe":6,"./util":8,"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1,"tiny-rx":5}],8:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 module.exports = {
   mouseToScreen: function(xmouse, ymouse) {
@@ -2198,5 +2242,5 @@ if (!window.cancelAnimationFrame) {
 }
 
 
-}).call(this,require("C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/util.coffee","/")
-},{"C:\\projects\\turo-touch\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":4,"buffer":1}]},{},[7])
+}).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/util.coffee","/")
+},{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1}]},{},[7])

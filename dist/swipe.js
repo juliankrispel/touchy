@@ -5,7 +5,11 @@
   trx = require('tiny-rx');
 
   module.exports = Swiper = (function() {
-    function Swiper(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
+    function Swiper() {
+      this.letGo = __bind(this.letGo, this);
+    }
+
+    Swiper.prototype.init = function(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
       var i, self, slide, swipeDimensions, _i, _j, _len, _len1, _ref, _ref1;
       if (containerSelector == null) {
         containerSelector = '.swipe';
@@ -17,7 +21,6 @@
         itemSelector = '.swipe-item';
       }
       this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
-      this.letGo = __bind(this.letGo, this);
       self = this;
       this.manualPosition = 0;
       this.swipe = document.querySelector(containerSelector);
@@ -28,7 +31,6 @@
         slide = _ref[_i];
         this.slides.push(slide);
       }
-      console.log('swipe: ', this.swipe, 'swipeWrap: ', 'swipeItems: ', this.slides);
       if (!this.swipe || !this.swipeWrap || this.slides.length < 2) {
         throw new Error('swipe swipeWrap or swipeItems are not valid elements');
       }
@@ -44,10 +46,10 @@
       this.slide();
       this.swipe.style.visibility = 'visible';
       this.positionContinuously();
-      trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
+      return trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
         return self.positionContinuously();
       });
-    }
+    };
 
     Swiper.prototype.prev = function() {
       if (this.currentIndex <= 0) {

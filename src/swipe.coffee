@@ -1,6 +1,6 @@
 trx = require('tiny-rx')
 module.exports = class Swiper
-    constructor: (containerSelector = '.swipe', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
+    init: (containerSelector = '.swipe', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
         self = @
         @manualPosition = 0
         @swipe = document.querySelector(containerSelector)
@@ -8,8 +8,6 @@ module.exports = class Swiper
         @slides = []
         for slide in document.querySelectorAll(itemSelector)
             @slides.push(slide) 
-
-        console.log('swipe: ', @swipe, 'swipeWrap: ', 'swipeItems: ', @slides)
 
         if(!@swipe || !@swipeWrap || @slides.length < 2)
             throw new Error('swipe swipeWrap or swipeItems are not valid elements')

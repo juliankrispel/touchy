@@ -12,18 +12,16 @@ u = require('./util')
 
 class Touchy
     constructor: (@mainElement = '.touchy', @swipeContainer = '.swipe', @scrollingClass = 'scroll') ->
-
-    bindEvents: ()->
+        @touchEvents = trx.createStream()
         #Get all touch events on keyboard container
-        @touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], @mainElement)
         self = @
 
         scrollAnimation = undefined
         gestureLock = undefined
         timeoutId = undefined
 
-        swiper = new Swipe(@swipeContainer)
-        @tapEvents = tapEvents = touchEvents.filter((e)->
+        @swiper = swiper = new Swipe()
+        @tapEvents = @touchEvents.filter((e)->
             result = e.type == 'touchend' && gestureLock && gestureLock.type == 'tapstart'
             gestureLock = undefined if result
             result
@@ -34,9 +32,9 @@ class Touchy
         # - vertically 
         # - or tapping it
         # If one of each is detected, lock them in until a touchend event
-        lastTouchEvent = touchEvents.createHistory(1)
+        lastTouchEvent = @touchEvents.createHistory(1)
 
-        touchEvents.subscribe((e)->
+        @touchEvents.subscribe((e)->
             if(e.type == 'touchstart')
                 timeoutId = setTimeout(()->
                     lastEvent = lastTouchEvent.value()[0]
@@ -49,12 +47,9 @@ class Touchy
                     else
                         gestureLock = {startEvent: e, type: 'scrollstart', movement: moveY}
                 , 100)
-            else if(e.type == 'touchend' && !gestureLock)
-                clearInterval(timeoutId)
-                tapEvents.publish(e)
         )
 
-        touchHistory = touchEvents.createHistory(6)
+        touchHistory = @touchEvents.createHistory(6)
         touchHistory.filter((events)->
             events.length > 1
         )
@@ -74,7 +69,6 @@ class Touchy
                 $target = u.get(events,-1).target
                 if($target.className.indexOf(self.scrollingClass) < 0)
                     $target = u.getParent($target, 'className', self.scrollingClass)
-                console.log($target, self.scrollingClass, u.get(events,-1))
                 $target.scrollTop+=distance if ($target)
                 scrollAnimation = undefined
             else if(u.get(events, -1).type == 'touchend')
@@ -115,4 +109,9 @@ class Touchy
             swiper.letGo()
         )
 
+    bindEvents: ()=>
+        @swiper.init(@swipeContainer)
+        @touchEvents.addDomEvent(['touchstart', 'touchmove', 'touchend'], @mainElement)
+
 module.exports = Touchy
+window.Touchy = Touchy if(window)

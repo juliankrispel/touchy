@@ -3,6 +3,7 @@ var gulp = require('gulp'),
     watch = require('gulp-watch'),
     concat = require('gulp-concat'),
     clean = require('gulp-clean'),
+    connect = require('gulp-connect'),
     browserify = require('gulp-browserify'),
     plumber = require('gulp-plumber'),
     uglify = require('gulp-uglify'),
@@ -15,7 +16,7 @@ gulp.task('build', function(){
         .pipe(plumber())
         .pipe(coffee())
         .pipe(rename({extname: '.js'}))
-        .pipe(gulp.dest('./dist/'))
+        .pipe(gulp.dest('./dist/'));
 
     gulp.src('./src/touchy.coffee', {read: false})
         .pipe(browserify({
@@ -34,4 +35,5 @@ gulp.task('default', function(){
     watcher.on('change', function(event){
         console.log('File '+event.path+' was '+event.type+', running tasks...');
     });
+    connect.server({port: 9003});
 });
