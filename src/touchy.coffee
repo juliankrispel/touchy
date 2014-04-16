@@ -1,6 +1,6 @@
 trx = require('tiny-rx')
-Swipe = require('./swipe.js')
-u = require('./util.js')
+Swipe = require('./swipe')
+u = require('./util')
 
 # Use:
 # new Touchy(

@@ -16,6 +16,16 @@ gulp.task('build', function(){
         .pipe(coffee())
         .pipe(rename({extname: '.js'}))
         .pipe(gulp.dest('./dist/'))
+
+    gulp.src('./src/touchy.coffee', {read: false})
+        .pipe(browserify({
+            insertGlobals: true,
+            transform: ['coffeeify'],
+            extensions: ['.coffee']
+        }))
+        .pipe(rename({extname: '.js'}))
+        .pipe(gulp.dest('./test'));
+
 });
 
 var watcher = gulp.watch('./src/*.coffee', ['build']);

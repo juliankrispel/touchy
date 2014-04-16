@@ -3,9 +3,9 @@
 
   trx = require('tiny-rx');
 
-  Swipe = require('./swipe.js');
+  Swipe = require('./swipe');
 
-  u = require('./util.js');
+  u = require('./util');
 
   Touchy = (function() {
     function Touchy(mainElement, swipeContainer, scrollingClass) {
