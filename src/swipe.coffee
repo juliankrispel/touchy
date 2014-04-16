@@ -9,8 +9,10 @@ module.exports = class Swiper
         for slide in document.querySelectorAll(itemSelector)
             @slides.push(slide) 
 
+        console.log('swipe: ', @swipe, 'swipeWrap: ', 'swipeItems: ', @slides)
+
         if(!@swipe || !@swipeWrap || @slides.length < 2)
-            throw new Error('swipe swipeWrap or slides have invalid content')
+            throw new Error('swipe swipeWrap or swipeItems are not valid elements')
 
         swipeDimensions = @swipe.getBoundingClientRect()
         @slideWidth = swipeDimensions.width

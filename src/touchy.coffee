@@ -1,7 +1,6 @@
-
 trx = require('tiny-rx')
-Swipe = require('./swipe.coffee')
-u = require('./util.coffee')
+Swipe = require('./swipe.js')
+u = require('./util.js')
 
 # Use:
 # new Touchy(
@@ -12,16 +11,17 @@ u = require('./util.coffee')
 #
 
 class Touchy
-    constructor: (mainElement = document.body, swipeContainer = '.swipe', scrollingClass = 'scroll') ->
+    constructor: (@mainElement = '.touchy', @swipeContainer = '.swipe', @scrollingClass = 'scroll') ->
 
+    bindEvents: ()->
         #Get all touch events on keyboard container
-        @touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], mainElement)
+        @touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], @mainElement)
 
         scrollAnimation = undefined
         gestureLock = undefined
         timeoutId = undefined
 
-        swiper = new Swipe(swipeContainer)
+        swiper = new Swipe(@swipeContainer)
         @tapEvents = tapEvents = touchEvents.filter((e)->
             result = e.type == 'touchend' && gestureLock && gestureLock.type == 'tapstart'
             gestureLock = undefined if result
@@ -61,6 +61,8 @@ class Touchy
         @swipeEvents = swipe = touchHistory.filter((e)-> 
             result = gestureLock && gestureLock.type == 'swipestart'
         )
+
+
         @scrollEvents = scroll = touchHistory.filter((e)-> 
             gestureLock && gestureLock.type == 'scrollstart'
         )
@@ -69,8 +71,8 @@ class Touchy
             if(u.get(events, -1).type == 'touchmove')
                 distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY
                 $target = u.get(events,-1).target
-                if($target.className.indexOf(scrollingClass) < 0)
-                    $target = u.getParent($target, 'className', scrollingClass)
+                if($target.className.indexOf(@scrollingClass) < 0)
+                    $target = u.getParent($target, 'className', @scrollingClass)
                 $target.scrollTop+=distance
                 scrollAnimation = undefined
             else if(u.get(events, -1).type == 'touchend')

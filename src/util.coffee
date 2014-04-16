@@ -1,5 +1,3 @@
-
-
 module.exports = {
     mouseToScreen: (xmouse, ymouse) ->
         box = $.canvas.getClientRects()[0]
