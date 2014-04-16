@@ -1,17 +1,20 @@
 trx = require('tiny-rx')
 module.exports = class Swiper
-    constructor: (containerSelector = '.swiper', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
+    constructor: (containerSelector = '.swipe', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
         self = @
         @manualPosition = 0
-        @slider = document.querySelector(containerSelector)
-        @slideWrap = document.querySelector(wrapSelector)
+        @swipe = document.querySelector(containerSelector)
+        @swipeWrap = document.querySelector(wrapSelector)
         @slides = []
         for slide in document.querySelectorAll(itemSelector)
             @slides.push(slide) 
 
-        sliderDimensions = @slider.getBoundingClientRect()
-        @slideWidth = sliderDimensions.width
-        @slideWrap.style.width = (@slides.length * @slideWidth) + 'px'
+        if(!@swipe || !@swipeWrap || @slides.length < 2)
+            throw new Error('swipe swipeWrap or slides have invalid content')
+
+        swipeDimensions = @swipe.getBoundingClientRect()
+        @slideWidth = swipeDimensions.width
+        @swipeWrap.style.width = (@slides.length * @slideWidth) + 'px'
 
 
         for slide, i in @slides
@@ -19,9 +22,9 @@ module.exports = class Swiper
 
         @currentIndex = 0
         @slide()
-        @slider.style.visibility = 'visible'
+        @swipe.style.visibility = 'visible'
         @positionContinuously()
-        trx.fromDomEvent('webkitTransitionEnd', @slider)
+        trx.fromDomEvent('webkitTransitionEnd', @swipe)
             .subscribe((e)->
                 self.positionContinuously()
             )
@@ -77,7 +80,6 @@ module.exports = class Swiper
         @manualPosition = 0
 
     translate: (index, dist, speed = @defaultSpeed) ->
-        document.querySelector(".debug#{index}").textContent = dist + 'px'
         slide = @slides[index]
         style = slide && slide.style
         #If transition is bigger than 1*width set transition to 0

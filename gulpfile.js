@@ -8,7 +8,7 @@ var gulp = require('gulp'),
 
 
 gulp.task('browserify', function(){
-    gulp.src('./src/main.coffee', {read: false})
+    gulp.src('./src/touchy.coffee', {read: false})
         .pipe(browserify({
             insertGlobals: true,
             transform: ['coffeeify'],
@@ -17,7 +17,7 @@ gulp.task('browserify', function(){
         .on('error', function(e,d){
             console.log('browserify encountered an error: ', e,d);
         })
-        .pipe(rename({basename: 'main', extname: '.js'}))
+        .pipe(rename({basename: 'touchy', extname: '.js'}))
         .pipe(gulp.dest('./dist/'));
 });
 
