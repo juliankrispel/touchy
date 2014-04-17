@@ -2025,8 +2025,9 @@ Touchy = (function() {
   }
 
   Touchy.prototype.bindEvents = function() {
-    var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, swipe, swiper, tapEvents, timeoutId, touchEvents, touchHistory;
+    var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, tapEvents, timeoutId, touchEvents, touchHistory;
     this.touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
+    self = this;
     scrollAnimation = void 0;
     gestureLock = void 0;
     timeoutId = void 0;
@@ -2087,10 +2088,13 @@ Touchy = (function() {
       if (u.get(events, -1).type === 'touchmove') {
         distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY;
         $target = u.get(events, -1).target;
-        if ($target.className.indexOf(this.scrollingClass) < 0) {
-          $target = u.getParent($target, 'className', this.scrollingClass);
+        if ($target.className.indexOf(self.scrollingClass) < 0) {
+          $target = u.getParent($target, 'className', self.scrollingClass);
         }
-        $target.scrollTop += distance;
+        console.log($target, self.scrollingClass, u.get(events, -1));
+        if ($target) {
+          $target.scrollTop += distance;
+        }
         scrollAnimation = void 0;
       } else if (u.get(events, -1).type === 'touchend') {
         gestureLock = void 0;

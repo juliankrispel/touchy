@@ -16,6 +16,7 @@ class Touchy
     bindEvents: ()->
         #Get all touch events on keyboard container
         @touchEvents = touchEvents = trx.fromDomEvent(['touchstart', 'touchmove', 'touchend'], @mainElement)
+        self = @
 
         scrollAnimation = undefined
         gestureLock = undefined
@@ -71,9 +72,10 @@ class Touchy
             if(u.get(events, -1).type == 'touchmove')
                 distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY
                 $target = u.get(events,-1).target
-                if($target.className.indexOf(@scrollingClass) < 0)
-                    $target = u.getParent($target, 'className', @scrollingClass)
-                $target.scrollTop+=distance
+                if($target.className.indexOf(self.scrollingClass) < 0)
+                    $target = u.getParent($target, 'className', self.scrollingClass)
+                console.log($target, self.scrollingClass, u.get(events,-1))
+                $target.scrollTop+=distance if ($target)
                 scrollAnimation = undefined
             else if(u.get(events, -1).type == 'touchend')
                 gestureLock = undefined
