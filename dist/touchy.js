@@ -1,5 +1,5 @@
 (function() {
-  var Swipe, Touchy, trx, u,
+  var Swipe, Touchy, swiper, trx, u,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   trx = require('tiny-rx');
@@ -8,68 +8,60 @@
 
   u = require('./util');
 
+  swiper = void 0;
+
   Touchy = (function() {
     function Touchy(mainElement, swipeContainer, scrollingClass) {
-      var easeOutScroll, easeOutSwipe, gestureLock, lastTouchEvent, scroll, scrollAnimation, self, swipe, swiper, timeoutId, touchHistory;
+      var easeOutScroll, easeOutSwipe, gesture, gestureHistory, scrollAnimation, self, timeoutId, touchHistory, whichGesture;
       this.mainElement = mainElement != null ? mainElement : '.touchy';
       this.swipeContainer = swipeContainer != null ? swipeContainer : '.swipe';
       this.scrollingClass = scrollingClass != null ? scrollingClass : 'scroll';
       this.bindEvents = __bind(this.bindEvents, this);
-      this.touchEvents = trx.createStream();
+      this.touches = trx.createStream();
       self = this;
       scrollAnimation = void 0;
-      gestureLock = void 0;
       timeoutId = void 0;
-      this.swiper = swiper = new Swipe();
-      this.tapEvents = this.touchEvents.filter(function(e) {
-        var result;
-        result = e.type === 'touchend' && gestureLock && gestureLock.type === 'tapstart';
-        if (result) {
-          gestureLock = void 0;
-        }
-        return result;
+      swiper = new Swipe();
+      touchHistory = this.touches.createHistory(6).filter(function(events) {
+        return events.length > 2;
       });
-      lastTouchEvent = this.touchEvents.createHistory(1);
-      this.touchEvents.subscribe(function(e) {
-        if (e.type === 'touchstart') {
-          return timeoutId = setTimeout(function() {
-            var lastEvent, moveX, moveY;
-            lastEvent = lastTouchEvent.value()[0];
-            moveX = lastEvent.changedTouches[0].clientX - e.changedTouches[0].clientX;
-            moveY = lastEvent.changedTouches[0].clientY - e.changedTouches[0].clientY;
-            if (Math.abs(moveX) < 4 && Math.abs(moveY) < 4) {
-              return gestureLock = {
-                startEvent: e,
-                type: 'tapstart'
-              };
-            } else if (Math.abs(moveX) > Math.abs(moveY)) {
-              return gestureLock = {
-                startEvent: e,
-                type: 'swipestart',
-                movement: moveX
-              };
-            } else {
-              return gestureLock = {
-                startEvent: e,
-                type: 'scrollstart',
-                movement: moveY
-              };
-            }
-          }, 100);
+      gestureHistory = this.touches.createHistory(6);
+      gesture = void 0;
+      whichGesture = gestureHistory.filter(function(events) {
+        return events.length > 5;
+      }).subscribe(function(events) {
+        var first, last, moveX, moveY;
+        first = u.get(events, 0);
+        last = u.get(events, -1);
+        if (first.type === 'touchstart') {
+          moveX = last.changedTouches[0].clientX - first.changedTouches[0].clientX;
+          moveY = last.changedTouches[0].clientY - first.changedTouches[0].clientY;
+          if (Math.abs(moveX) < 4 && Math.abs(moveY) < 4) {
+            gesture = 'tap';
+            gestureHistory.reset();
+          } else if (Math.abs(moveX) > Math.abs(moveY)) {
+            gesture = 'swipe';
+            gestureHistory.reset();
+          } else {
+            gesture = 'scroll';
+            gestureHistory.reset();
+          }
+          return void 0;
         }
       });
-      touchHistory = this.touchEvents.createHistory(6);
-      touchHistory.filter(function(events) {
-        return events.length > 1;
+      this.taps = this.touches.filter(function(e) {
+        return gesture === 'tap' && e.type === 'touchend';
       });
-      this.swipeEvents = swipe = touchHistory.filter(function(e) {
-        var result;
-        return result = gestureLock && gestureLock.type === 'swipestart';
+      this.taps.subscribe(function(e) {
+        return gesture = void 0;
       });
-      this.scrollEvents = scroll = touchHistory.filter(function(e) {
-        return gestureLock && gestureLock.type === 'scrollstart';
+      this.swipes = touchHistory.filter(function() {
+        return gesture === 'swipe';
       });
-      easeOutScroll = scroll.filter(function(events) {
+      this.scrolls = touchHistory.filter(function() {
+        return gesture === 'scroll';
+      });
+      easeOutScroll = this.scrolls.filter(function(events) {
         var $target, distance;
         if (u.get(events, -1).type === 'touchmove') {
           distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY;
@@ -82,19 +74,20 @@
           }
           scrollAnimation = void 0;
         } else if (u.get(events, -1).type === 'touchend') {
-          gestureLock = void 0;
+          gesture = void 0;
           return true;
         }
         return false;
       });
-      easeOutSwipe = swipe.filter(function(events) {
-        var $target, distance;
-        if (u.get(events, -1).type === 'touchmove') {
+      easeOutSwipe = this.swipes.filter(function(events) {
+        var $target, distance, last;
+        last = u.get(events, -1);
+        if (last.type === 'touchmove') {
           distance = u.get(events, -2).touches[0].clientX - u.get(events, -1).touches[0].clientX;
           $target = u.get(events, -2).target;
           swiper.moveRel(distance);
-        } else if (u.get(events, -1).type === 'touchend' && events.length > 3) {
-          gestureLock = void 0;
+        } else if (last.type === 'touchend' && events.length > 3) {
+          gesture = void 0;
           return true;
         }
         return false;
@@ -123,8 +116,8 @@
     }
 
     Touchy.prototype.bindEvents = function() {
-      this.swiper.init(this.swipeContainer);
-      return this.touchEvents.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
+      swiper.init(this.swipeContainer);
+      return this.touches.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
     };
 
     return Touchy;
