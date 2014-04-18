@@ -27,26 +27,25 @@ class Touchy
         # - vertically 
         # - or tapping it
         # If one of each is detected, lock them in until a touchend event
-        touchHistory = @touches.createHistory(6).filter((events)->
+        touchHistory = @touches.map((e)-> {target: e.target, type: e.type, x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY}).createHistory(6).filter((events)->
             events.length > 2
         )
 
-        gestureHistory = @touches.createHistory(6)
+        gestureHistory = @touches.map((e)-> {type: e.type, x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY}).createHistory()
 
         gesture = undefined
 
-        whichGesture = gestureHistory.filter((events)->
-            events.length > 5
+        gestureHistory.filter((events)->
+            events.length > 1
         ).subscribe((events)->
             first = u.get(events, 0)
             last = u.get(events, -1)
 
             if(first.type == 'touchstart')
-                moveX = last.changedTouches[0].clientX - first.changedTouches[0].clientX
-                moveY = last.changedTouches[0].clientY - first.changedTouches[0].clientY
-                if (Math.abs(moveX) < 4 && Math.abs(moveY) < 4)
+                moveX = last.x - first.x
+                moveY = last.y - first.y
+                if (Math.abs(moveX) < 6 && Math.abs(moveY) < 6)
                     gesture = 'tap'
-                    gestureHistory.reset()
                 else if(Math.abs(moveX) > Math.abs(moveY))
                     gesture = 'swipe'
                     gestureHistory.reset()
@@ -56,18 +55,29 @@ class Touchy
                 undefined
 
         )
+        $debug = document.querySelector('.debug')
 
         @taps = @touches.filter((e)-> 
             gesture == 'tap' && e.type == 'touchend'
         )
         @taps.subscribe((e)-> 
+            console.log('tap')
+            setTimeout(()-> 
+                $debug.textContent = ''
+            , 400)
             gesture = undefined)
+
+        @touches.filter('type', 'touchend').subscribe((e)-> 
+            gestureHistory.reset()
+            gesture = undefined
+        )
+
         @swipes = touchHistory.filter(()-> gesture == 'swipe')
         @scrolls = touchHistory.filter(()-> gesture == 'scroll')
 
         easeOutScroll = @scrolls.filter((events)->
             if(u.get(events, -1).type == 'touchmove')
-                distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY
+                distance = u.get(events, -2).y - u.get(events, -1).y
                 $target = u.get(events,-1).target
                 if($target.className.indexOf(self.scrollingClass) < 0)
                     $target = u.getParent($target, 'className', self.scrollingClass)
@@ -82,7 +92,7 @@ class Touchy
         easeOutSwipe = @swipes.filter((events)->
             last = u.get(events,-1)
             if(last.type == 'touchmove')
-                distance = u.get(events,-2).touches[0].clientX - u.get(events,-1).touches[0].clientX
+                distance = u.get(events,-2).x - u.get(events,-1).x
 
                 $target = u.get(events,-2).target
                 swiper.moveRel(distance)
@@ -96,7 +106,7 @@ class Touchy
         #Easing out slide
         easeOutScroll.subscribe((events)->
             el = u.get(events, -1).target
-            distance = u.get(events,0).changedTouches[0].clientY - u.get(events, -1).changedTouches[0].clientY
+            distance = u.get(events,0).y - u.get(events, -1).y
             targetPosition = (distance * (Math.abs(distance)*2)) + u.get(events,-2).target.scrollTop
 
             scrollAnimation = () ->

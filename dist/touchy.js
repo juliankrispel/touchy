@@ -12,7 +12,7 @@
 
   Touchy = (function() {
     function Touchy(mainElement, swipeContainer, scrollingClass) {
-      var easeOutScroll, easeOutSwipe, gesture, gestureHistory, scrollAnimation, self, timeoutId, touchHistory, whichGesture;
+      var $debug, easeOutScroll, easeOutSwipe, gesture, gestureHistory, scrollAnimation, self, timeoutId, touchHistory;
       this.mainElement = mainElement != null ? mainElement : '.touchy';
       this.swipeContainer = swipeContainer != null ? swipeContainer : '.swipe';
       this.scrollingClass = scrollingClass != null ? scrollingClass : 'scroll';
@@ -22,23 +22,35 @@
       scrollAnimation = void 0;
       timeoutId = void 0;
       swiper = new Swipe();
-      touchHistory = this.touches.createHistory(6).filter(function(events) {
+      touchHistory = this.touches.map(function(e) {
+        return {
+          target: e.target,
+          type: e.type,
+          x: e.changedTouches[0].clientX,
+          y: e.changedTouches[0].clientY
+        };
+      }).createHistory(6).filter(function(events) {
         return events.length > 2;
       });
-      gestureHistory = this.touches.createHistory(6);
+      gestureHistory = this.touches.map(function(e) {
+        return {
+          type: e.type,
+          x: e.changedTouches[0].clientX,
+          y: e.changedTouches[0].clientY
+        };
+      }).createHistory();
       gesture = void 0;
-      whichGesture = gestureHistory.filter(function(events) {
-        return events.length > 5;
+      gestureHistory.filter(function(events) {
+        return events.length > 1;
       }).subscribe(function(events) {
         var first, last, moveX, moveY;
         first = u.get(events, 0);
         last = u.get(events, -1);
         if (first.type === 'touchstart') {
-          moveX = last.changedTouches[0].clientX - first.changedTouches[0].clientX;
-          moveY = last.changedTouches[0].clientY - first.changedTouches[0].clientY;
-          if (Math.abs(moveX) < 4 && Math.abs(moveY) < 4) {
+          moveX = last.x - first.x;
+          moveY = last.y - first.y;
+          if (Math.abs(moveX) < 6 && Math.abs(moveY) < 6) {
             gesture = 'tap';
-            gestureHistory.reset();
           } else if (Math.abs(moveX) > Math.abs(moveY)) {
             gesture = 'swipe';
             gestureHistory.reset();
@@ -49,10 +61,19 @@
           return void 0;
         }
       });
+      $debug = document.querySelector('.debug');
       this.taps = this.touches.filter(function(e) {
         return gesture === 'tap' && e.type === 'touchend';
       });
       this.taps.subscribe(function(e) {
+        console.log('tap');
+        setTimeout(function() {
+          return $debug.textContent = '';
+        }, 400);
+        return gesture = void 0;
+      });
+      this.touches.filter('type', 'touchend').subscribe(function(e) {
+        gestureHistory.reset();
         return gesture = void 0;
       });
       this.swipes = touchHistory.filter(function() {
@@ -64,7 +85,7 @@
       easeOutScroll = this.scrolls.filter(function(events) {
         var $target, distance;
         if (u.get(events, -1).type === 'touchmove') {
-          distance = u.get(events, -2).touches[0].clientY - u.get(events, -1).touches[0].clientY;
+          distance = u.get(events, -2).y - u.get(events, -1).y;
           $target = u.get(events, -1).target;
           if ($target.className.indexOf(self.scrollingClass) < 0) {
             $target = u.getParent($target, 'className', self.scrollingClass);
@@ -83,7 +104,7 @@
         var $target, distance, last;
         last = u.get(events, -1);
         if (last.type === 'touchmove') {
-          distance = u.get(events, -2).touches[0].clientX - u.get(events, -1).touches[0].clientX;
+          distance = u.get(events, -2).x - u.get(events, -1).x;
           $target = u.get(events, -2).target;
           swiper.moveRel(distance);
         } else if (last.type === 'touchend' && events.length > 3) {
@@ -95,7 +116,7 @@
       easeOutScroll.subscribe(function(events) {
         var distance, el, targetPosition;
         el = u.get(events, -1).target;
-        distance = u.get(events, 0).changedTouches[0].clientY - u.get(events, -1).changedTouches[0].clientY;
+        distance = u.get(events, 0).y - u.get(events, -1).y;
         targetPosition = (distance * (Math.abs(distance) * 2)) + u.get(events, -2).target.scrollTop;
         scrollAnimation = function() {
           var dist;
