@@ -2,7 +2,9 @@ trx = require('tiny-rx')
 module.exports = class Swiper
     init: (containerSelector = '.swipe', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
         self = @
+        window.s = self
         @manualPosition = 0
+        @transitionInProgress = false
         @swipe = document.querySelector(containerSelector)
         @swipeWrap = document.querySelector(wrapSelector)
         @slides = []
@@ -21,13 +23,14 @@ module.exports = class Swiper
             slide.style.width = @slideWidth + 'px'
 
         @currentIndex = 0
-        @slide()
+        @slide(undefined, 0)
         @swipe.style.visibility = 'visible'
         @positionContinuously()
-        trx.fromDomEvent('webkitTransitionEnd', @swipe)
-            .subscribe((e)->
-                self.positionContinuously()
-            )
+        @transitionEnd = trx.fromDomEvent('webkitTransitionEnd', @swipe);
+        @transitionEnd.subscribe(()->
+            @transitionInProgress = false
+            self.positionContinuously()
+        )
 
     prev: () ->
         if(@currentIndex <= 0)
@@ -41,14 +44,13 @@ module.exports = class Swiper
             @currentIndex = 0
         else
             @currentIndex++
-
         @slide()
 
     slide: (index, speed)->
         self = @
         self.move(index, speed)
 
-    move: (index = @currentIndex, speed)->
+    move: (index = @currentIndex, speed)=>
         for slide, i in @slides
             @translate(i, i*@slideWidth - (index*@slideWidth), speed)
 
@@ -67,19 +69,25 @@ module.exports = class Swiper
             @move(@currentIndex, 0)
 
     moveRel: (dist)->
+        if(@transitionInProgress)
+            @transitionEnd.publish()
+
         @manualPosition+=dist
         for slide, i in @slides
             @translate(i, i*@slideWidth - (@currentIndex*@slideWidth) - @manualPosition, 0)
     letGo: ()=>
-        if(@manualPosition > @slideWidth/2)
+
+        if(@manualPosition > @slideWidth/3)
             @next()
-        else if(@manualPosition < -@slideWidth/2)
+        else if(@manualPosition < -@slideWidth/3)
             @prev()
         else
             @move()
         @manualPosition = 0
 
     translate: (index, dist, speed = @defaultSpeed) ->
+        if(speed > 0)
+            @transitionInProgress = true
         slide = @slides[index]
         style = slide && slide.style
         #If transition is bigger than 1*width set transition to 0

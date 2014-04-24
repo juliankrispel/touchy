@@ -1,6 +1,28 @@
 (function() {
-  var Swipe, Touchy, swiper, trx, u,
+  var Swipe, Touchy, addEventListener, swiper, trx, u,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  addEventListener = function(obj, evt, fnc) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evt, fnc, false);
+      true;
+    } else if (obj.attachEvent) {
+      obj.attachEvent('on' + evt, fnc);
+    } else {
+      evt = 'on' + evt;
+      if (typeof obj[evt] === 'function') {
+        fnc = (function(f1, f2) {
+          return function() {
+            f1.apply(this["arguments"]);
+            return f2.apply(this["arguments"]);
+          };
+        })(obj[evt], fnc);
+      }
+      obj[evt] = fnc;
+      true;
+    }
+    return false;
+  };
 
   trx = require('tiny-rx');
 
@@ -19,6 +41,9 @@
       this.bindEvents = __bind(this.bindEvents, this);
       this.touches = trx.createStream();
       self = this;
+      document.ontouchmove = function(e) {
+        return e.preventDefault();
+      };
       scrollAnimation = void 0;
       timeoutId = void 0;
       swiper = new Swipe();
@@ -64,13 +89,6 @@
       $debug = document.querySelector('.debug');
       this.taps = this.touches.filter(function(e) {
         return gesture === 'tap' && e.type === 'touchend';
-      });
-      this.taps.subscribe(function(e) {
-        console.log('tap');
-        setTimeout(function() {
-          return $debug.textContent = '';
-        }, 400);
-        return gesture = void 0;
       });
       this.touches.filter('type', 'touchend').subscribe(function(e) {
         gestureHistory.reset();

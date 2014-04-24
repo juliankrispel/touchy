@@ -1910,6 +1910,7 @@ trx = require('tiny-rx');
 module.exports = Swiper = (function() {
   function Swiper() {
     this.letGo = __bind(this.letGo, this);
+    this.move = __bind(this.move, this);
   }
 
   Swiper.prototype.init = function(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
@@ -1925,7 +1926,9 @@ module.exports = Swiper = (function() {
     }
     this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
     self = this;
+    window.s = self;
     this.manualPosition = 0;
+    this.transitionInProgress = false;
     this.swipe = document.querySelector(containerSelector);
     this.swipeWrap = document.querySelector(wrapSelector);
     this.slides = [];
@@ -1946,10 +1949,12 @@ module.exports = Swiper = (function() {
       slide.style.width = this.slideWidth + 'px';
     }
     this.currentIndex = 0;
-    this.slide();
+    this.slide(void 0, 0);
     this.swipe.style.visibility = 'visible';
     this.positionContinuously();
-    return trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
+    this.transitionEnd = trx.fromDomEvent('webkitTransitionEnd', this.swipe);
+    return this.transitionEnd.subscribe(function() {
+      this.transitionInProgress = false;
       return self.positionContinuously();
     });
   };
@@ -2011,6 +2016,9 @@ module.exports = Swiper = (function() {
 
   Swiper.prototype.moveRel = function(dist) {
     var i, slide, _i, _len, _ref, _results;
+    if (this.transitionInProgress) {
+      this.transitionEnd.publish();
+    }
     this.manualPosition += dist;
     _ref = this.slides;
     _results = [];
@@ -2022,9 +2030,9 @@ module.exports = Swiper = (function() {
   };
 
   Swiper.prototype.letGo = function() {
-    if (this.manualPosition > this.slideWidth / 2) {
+    if (this.manualPosition > this.slideWidth / 3) {
       this.next();
-    } else if (this.manualPosition < -this.slideWidth / 2) {
+    } else if (this.manualPosition < -this.slideWidth / 3) {
       this.prev();
     } else {
       this.move();
@@ -2036,6 +2044,9 @@ module.exports = Swiper = (function() {
     var slide, style;
     if (speed == null) {
       speed = this.defaultSpeed;
+    }
+    if (speed > 0) {
+      this.transitionInProgress = true;
     }
     slide = this.slides[index];
     style = slide && slide.style;
@@ -2055,8 +2066,30 @@ module.exports = Swiper = (function() {
 }).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/swipe.coffee","/")
 },{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1,"tiny-rx":5}],7:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
-var Swipe, Touchy, swiper, trx, u,
+var Swipe, Touchy, addEventListener, swiper, trx, u,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+addEventListener = function(obj, evt, fnc) {
+  if (obj.addEventListener) {
+    obj.addEventListener(evt, fnc, false);
+    true;
+  } else if (obj.attachEvent) {
+    obj.attachEvent('on' + evt, fnc);
+  } else {
+    evt = 'on' + evt;
+    if (typeof obj[evt] === 'function') {
+      fnc = (function(f1, f2) {
+        return function() {
+          f1.apply(this["arguments"]);
+          return f2.apply(this["arguments"]);
+        };
+      })(obj[evt], fnc);
+    }
+    obj[evt] = fnc;
+    true;
+  }
+  return false;
+};
 
 trx = require('tiny-rx');
 
@@ -2075,6 +2108,9 @@ Touchy = (function() {
     this.bindEvents = __bind(this.bindEvents, this);
     this.touches = trx.createStream();
     self = this;
+    document.ontouchmove = function(e) {
+      return e.preventDefault();
+    };
     scrollAnimation = void 0;
     timeoutId = void 0;
     swiper = new Swipe();
@@ -2120,13 +2156,6 @@ Touchy = (function() {
     $debug = document.querySelector('.debug');
     this.taps = this.touches.filter(function(e) {
       return gesture === 'tap' && e.type === 'touchend';
-    });
-    this.taps.subscribe(function(e) {
-      console.log('tap');
-      setTimeout(function() {
-        return $debug.textContent = '';
-      }, 400);
-      return gesture = void 0;
     });
     this.touches.filter('type', 'touchend').subscribe(function(e) {
       gestureHistory.reset();

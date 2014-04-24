@@ -7,6 +7,7 @@
   module.exports = Swiper = (function() {
     function Swiper() {
       this.letGo = __bind(this.letGo, this);
+      this.move = __bind(this.move, this);
     }
 
     Swiper.prototype.init = function(containerSelector, wrapSelector, itemSelector, defaultSpeed) {
@@ -22,7 +23,9 @@
       }
       this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
       self = this;
+      window.s = self;
       this.manualPosition = 0;
+      this.transitionInProgress = false;
       this.swipe = document.querySelector(containerSelector);
       this.swipeWrap = document.querySelector(wrapSelector);
       this.slides = [];
@@ -43,10 +46,12 @@
         slide.style.width = this.slideWidth + 'px';
       }
       this.currentIndex = 0;
-      this.slide();
+      this.slide(void 0, 0);
       this.swipe.style.visibility = 'visible';
       this.positionContinuously();
-      return trx.fromDomEvent('webkitTransitionEnd', this.swipe).subscribe(function(e) {
+      this.transitionEnd = trx.fromDomEvent('webkitTransitionEnd', this.swipe);
+      return this.transitionEnd.subscribe(function() {
+        this.transitionInProgress = false;
         return self.positionContinuously();
       });
     };
@@ -108,6 +113,9 @@
 
     Swiper.prototype.moveRel = function(dist) {
       var i, slide, _i, _len, _ref, _results;
+      if (this.transitionInProgress) {
+        this.transitionEnd.publish();
+      }
       this.manualPosition += dist;
       _ref = this.slides;
       _results = [];
@@ -119,9 +127,9 @@
     };
 
     Swiper.prototype.letGo = function() {
-      if (this.manualPosition > this.slideWidth / 2) {
+      if (this.manualPosition > this.slideWidth / 3) {
         this.next();
-      } else if (this.manualPosition < -this.slideWidth / 2) {
+      } else if (this.manualPosition < -this.slideWidth / 3) {
         this.prev();
       } else {
         this.move();
@@ -133,6 +141,9 @@
       var slide, style;
       if (speed == null) {
         speed = this.defaultSpeed;
+      }
+      if (speed > 0) {
+        this.transitionInProgress = true;
       }
       slide = this.slides[index];
       style = slide && slide.style;

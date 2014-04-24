@@ -1,3 +1,28 @@
+addEventListener = (obj, evt, fnc) ->
+    # W3C model
+    if (obj.addEventListener) 
+        obj.addEventListener(evt, fnc, false)
+        true
+    # Microsoft model
+    else if (obj.attachEvent) 
+        obj.attachEvent('on' + evt, fnc)
+
+    # Browser don't support W3C or MSFT model, go on with traditional
+    else 
+        evt = 'on'+evt
+        if(typeof obj[evt] == 'function')
+            ## Object already has a function on traditional
+            ## Let's wrap it with our own function inside another function
+            fnc = ((f1,f2)->
+                 ()->
+                    f1.apply(@arguments)
+                    f2.apply(@arguments)
+            )(obj[evt], fnc)
+        obj[evt] = fnc
+        true
+    false
+
+
 trx = require('tiny-rx')
 Swipe = require('./swipe')
 u = require('./util')
@@ -16,6 +41,7 @@ class Touchy
         @touches = trx.createStream()
         #Get all touch events on keyboard container
         self = @
+        document.ontouchmove = (e)-> e.preventDefault()
 
         scrollAnimation = undefined
         timeoutId = undefined
@@ -60,12 +86,6 @@ class Touchy
         @taps = @touches.filter((e)-> 
             gesture == 'tap' && e.type == 'touchend'
         )
-        @taps.subscribe((e)-> 
-            console.log('tap')
-            setTimeout(()-> 
-                $debug.textContent = ''
-            , 400)
-            gesture = undefined)
 
         @touches.filter('type', 'touchend').subscribe((e)-> 
             gestureHistory.reset()
