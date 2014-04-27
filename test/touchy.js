@@ -2030,7 +2030,7 @@ module.exports = Swiper = (function() {
   };
 
   Swiper.prototype.letGo = function() {
-    if (this.manualPosition > this.slideWidth / 3) {
+    if (this.manualPosition > this.slideWidth / 7) {
       this.next();
     } else if (this.manualPosition < -this.slideWidth / 3) {
       this.prev();
@@ -2066,10 +2066,10 @@ module.exports = Swiper = (function() {
 }).call(this,require("/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/swipe.coffee","/")
 },{"/Users/juliankrispel/projects/touchy/node_modules/gulp-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":4,"buffer":1,"tiny-rx":5}],7:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
-var Swipe, Touchy, addEventListener, swiper, trx, u,
+var Swipe, Touchy, eddEventListener, swiper, trx, u,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-addEventListener = function(obj, evt, fnc) {
+eddEventListener = function(obj, evt, fnc) {
   if (obj.addEventListener) {
     obj.addEventListener(evt, fnc, false);
     true;

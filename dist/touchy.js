@@ -1,8 +1,8 @@
 (function() {
-  var Swipe, Touchy, addEventListener, swiper, trx, u,
+  var Swipe, Touchy, eddEventListener, swiper, trx, u,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-  addEventListener = function(obj, evt, fnc) {
+  eddEventListener = function(obj, evt, fnc) {
     if (obj.addEventListener) {
       obj.addEventListener(evt, fnc, false);
       true;

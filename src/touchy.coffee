@@ -1,4 +1,4 @@
-addEventListener = (obj, evt, fnc) ->
+eddEventListener = (obj, evt, fnc) ->
     # W3C model
     if (obj.addEventListener) 
         obj.addEventListener(evt, fnc, false)

@@ -77,7 +77,7 @@ module.exports = class Swiper
             @translate(i, i*@slideWidth - (@currentIndex*@slideWidth) - @manualPosition, 0)
     letGo: ()=>
 
-        if(@manualPosition > @slideWidth/3)
+        if(@manualPosition > @slideWidth/7)
             @next()
         else if(@manualPosition < -@slideWidth/3)
             @prev()

@@ -127,7 +127,7 @@
     };
 
     Swiper.prototype.letGo = function() {
-      if (this.manualPosition > this.slideWidth / 3) {
+      if (this.manualPosition > this.slideWidth / 7) {
         this.next();
       } else if (this.manualPosition < -this.slideWidth / 3) {
         this.prev();
