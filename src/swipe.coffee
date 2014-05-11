@@ -2,7 +2,6 @@ trx = require('tiny-rx')
 module.exports = class Swiper
     init: (containerSelector = '.swipe', wrapSelector = '.swipe-wrap', itemSelector = '.swipe-item', @defaultSpeed = 400)->
         self = @
-        window.s = self
         @manualPosition = 0
         @transitionInProgress = false
         @swipe = document.querySelector(containerSelector)
@@ -33,9 +32,6 @@ module.exports = class Swiper
         @transitionEnd.subscribe(()->
             self.transitionInProgress = false
             self.positionContinuously()
-        )
-        @swiped.subscribe((e)->
-            console.log('position', e)
         )
 
     prev: () ->
@@ -87,13 +83,13 @@ module.exports = class Swiper
         if(target > lastSlide)
             target = target - lastSlide - 1
         else if (target < 0)
-            target = lastSlide - target + 1
+            target = lastSlide - target - 1
 
         @currentPosition = target
         @swiped.publish(@currentPosition)
 
     slideTo: (num) =>
-        if(!num)
+        if(isNaN(num))
             return
         moveTo = @_index + (num - @currentPosition)
         lastSlide = @slides.length - 1
@@ -101,7 +97,7 @@ module.exports = class Swiper
         if(moveTo > lastSlide)
             moveTo = moveTo - lastSlide - 1
         else if (moveTo < 0)
-            moveTo = lastSlide + moveTo
+            moveTo = lastSlide - moveTo - 1
             
         @move(moveTo)
 

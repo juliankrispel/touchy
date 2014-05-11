@@ -46,7 +46,7 @@ class Touchy
         scrollAnimation = undefined
         timeoutId = undefined
 
-        swiper = new Swipe()
+        @swiper = new Swipe()
 
         # Filter touch movements. There are 3 possibilities:
         # - Sliding our finger horizontally
@@ -115,7 +115,7 @@ class Touchy
                 distance = u.get(events,-2).x - u.get(events,-1).x
 
                 $target = u.get(events,-2).target
-                swiper.moveRel(distance)
+                self.swiper.moveRel(distance)
             
             else if(last.type == 'touchend' && events.length > 3)
                 gesture = undefined
@@ -139,11 +139,11 @@ class Touchy
         )
 
         easeOutSwipe.subscribe((e)->
-            swiper.letGo()
+            self.swiper.letGo()
         )
 
     bindEvents: ()=>
-        swiper.init(@swipeContainer)
+        @swiper.init(@swipeContainer)
         @touches.addDomEvent(['touchstart', 'touchmove', 'touchend'], @mainElement)
 
 module.exports = Touchy

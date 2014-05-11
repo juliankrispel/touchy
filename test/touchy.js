@@ -1928,7 +1928,6 @@ module.exports = Swiper = (function() {
     }
     this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
     self = this;
-    window.s = self;
     this.manualPosition = 0;
     this.transitionInProgress = false;
     this.swipe = document.querySelector(containerSelector);
@@ -2042,7 +2041,7 @@ module.exports = Swiper = (function() {
     if (target > lastSlide) {
       target = target - lastSlide - 1;
     } else if (target < 0) {
-      target = lastSlide - target + 1;
+      target = lastSlide - target - 1;
     }
     this.currentPosition = target;
     return this.swiped.publish(this.currentPosition);
@@ -2050,7 +2049,7 @@ module.exports = Swiper = (function() {
 
   Swiper.prototype.slideTo = function(num) {
     var lastSlide, moveTo;
-    if (!num) {
+    if (isNaN(num)) {
       return;
     }
     moveTo = this._index + (num - this.currentPosition);
@@ -2059,8 +2058,9 @@ module.exports = Swiper = (function() {
     if (moveTo > lastSlide) {
       moveTo = moveTo - lastSlide - 1;
     } else if (moveTo < 0) {
-      moveTo = lastSlide + moveTo;
+      moveTo = lastSlide - moveTo - 1;
     }
+    console.log('moveTo', moveTo);
     return this.move(moveTo);
   };
 
@@ -2148,7 +2148,7 @@ Touchy = (function() {
     };
     scrollAnimation = void 0;
     timeoutId = void 0;
-    swiper = new Swipe();
+    this.swiper = new Swipe();
     touchHistory = this.touches.map(function(e) {
       return {
         target: e.target,
@@ -2226,7 +2226,7 @@ Touchy = (function() {
       if (last.type === 'touchmove') {
         distance = u.get(events, -2).x - u.get(events, -1).x;
         $target = u.get(events, -2).target;
-        swiper.moveRel(distance);
+        self.swiper.moveRel(distance);
       } else if (last.type === 'touchend' && events.length > 3) {
         gesture = void 0;
         return true;
@@ -2252,12 +2252,12 @@ Touchy = (function() {
       return requestAnimationFrame(scrollAnimation);
     });
     easeOutSwipe.subscribe(function(e) {
-      return swiper.letGo();
+      return self.swiper.letGo();
     });
   }
 
   Touchy.prototype.bindEvents = function() {
-    swiper.init(this.swipeContainer);
+    this.swiper.init(this.swipeContainer);
     return this.touches.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
   };
 

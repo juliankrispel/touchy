@@ -25,7 +25,6 @@
       }
       this.defaultSpeed = defaultSpeed != null ? defaultSpeed : 400;
       self = this;
-      window.s = self;
       this.manualPosition = 0;
       this.transitionInProgress = false;
       this.swipe = document.querySelector(containerSelector);
@@ -139,7 +138,7 @@
       if (target > lastSlide) {
         target = target - lastSlide - 1;
       } else if (target < 0) {
-        target = lastSlide - target + 1;
+        target = lastSlide - target - 1;
       }
       this.currentPosition = target;
       return this.swiped.publish(this.currentPosition);
@@ -147,7 +146,7 @@
 
     Swiper.prototype.slideTo = function(num) {
       var lastSlide, moveTo;
-      if (!num) {
+      if (isNaN(num)) {
         return;
       }
       moveTo = this._index + (num - this.currentPosition);
@@ -156,8 +155,9 @@
       if (moveTo > lastSlide) {
         moveTo = moveTo - lastSlide - 1;
       } else if (moveTo < 0) {
-        moveTo = lastSlide + moveTo;
+        moveTo = lastSlide - moveTo - 1;
       }
+      console.log('moveTo', moveTo);
       return this.move(moveTo);
     };
 

@@ -46,7 +46,7 @@
       };
       scrollAnimation = void 0;
       timeoutId = void 0;
-      swiper = new Swipe();
+      this.swiper = new Swipe();
       touchHistory = this.touches.map(function(e) {
         return {
           target: e.target,
@@ -124,7 +124,7 @@
         if (last.type === 'touchmove') {
           distance = u.get(events, -2).x - u.get(events, -1).x;
           $target = u.get(events, -2).target;
-          swiper.moveRel(distance);
+          self.swiper.moveRel(distance);
         } else if (last.type === 'touchend' && events.length > 3) {
           gesture = void 0;
           return true;
@@ -150,12 +150,12 @@
         return requestAnimationFrame(scrollAnimation);
       });
       easeOutSwipe.subscribe(function(e) {
-        return swiper.letGo();
+        return self.swiper.letGo();
       });
     }
 
     Touchy.prototype.bindEvents = function() {
-      swiper.init(this.swipeContainer);
+      this.swiper.init(this.swipeContainer);
       return this.touches.addDomEvent(['touchstart', 'touchmove', 'touchend'], this.mainElement);
     };
 
