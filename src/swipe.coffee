@@ -7,6 +7,7 @@ module.exports = class Swiper
         @transitionInProgress = false
         @swipe = document.querySelector(containerSelector)
         @swipeWrap = document.querySelector(wrapSelector)
+        @swiped = trx.createStream()
         @slides = []
         for slide in document.querySelectorAll(itemSelector)
             @slides.push(slide) 
@@ -22,51 +23,66 @@ module.exports = class Swiper
         for slide, i in @slides
             slide.style.width = @slideWidth + 'px'
 
-        @currentIndex = 0
+        @currentPosition = 0
+        @_index = 0
+        
         @slide(undefined, 0)
         @swipe.style.visibility = 'visible'
         @positionContinuously()
         @transitionEnd = trx.fromDomEvent('webkitTransitionEnd', @swipe);
         @transitionEnd.subscribe(()->
-            @transitionInProgress = false
+            self.transitionInProgress = false
             self.positionContinuously()
+            self.swiped.publish(self.currentPosition)
         )
 
     prev: () ->
-        if(@currentIndex <= 0)
-            @currentIndex = @slides.length - 1
+        if(@_index <= 0)
+            @_index = @slides.length - 1
         else
-            @currentIndex--
+            @_index--
+
+        if(@currentPosition <= 0)
+            @currentPosition = @slides.length - 1
+        else
+            @currentPosition--
+
         @slide()
 
     next: () ->
-        if(@currentIndex >= @slides.length - 1)
-            @currentIndex = 0
+        if(@_index >= @slides.length - 1)
+            @_index = 0
         else
-            @currentIndex++
+            @_index++
+
+        if(@currentPosition >= @slides.length - 1)
+            @currentPosition = 0
+        else
+            @currentPosition++
+
         @slide()
 
     slide: (index, speed)->
         self = @
         self.move(index, speed)
 
-    move: (index = @currentIndex, speed)=>
+    move: (index = @_index, speed)=>
         for slide, i in @slides
             @translate(i, i*@slideWidth - (index*@slideWidth), speed)
 
     positionContinuously: ()->
         last = @slides.length - 1
         first = 0
-        if(@currentIndex == last)
+        if(@_index == last)
             firstSlide = @slides.shift()
             @slides.push(firstSlide)
-            @currentIndex--
-            @move(@currentIndex, 0)
-        else if(@currentIndex == first)
+            @_index--
+            @move(@_index, 0)
+        else if(@_index == first)
             lastSlide = @slides.pop()
-            @currentIndex++
+            @_index++
             @slides.unshift(lastSlide)
-            @move(@currentIndex, 0)
+            @move(@_index, 0)
 
     moveRel: (dist)->
         if(@transitionInProgress)
@@ -74,9 +90,9 @@ module.exports = class Swiper
 
         @manualPosition+=dist
         for slide, i in @slides
-            @translate(i, i*@slideWidth - (@currentIndex*@slideWidth) - @manualPosition, 0)
-    letGo: ()=>
+            @translate(i, i*@slideWidth - (@_index*@slideWidth) - @manualPosition, 0)
 
+    letGo: ()=>
         if(@manualPosition > @slideWidth/7)
             @next()
         else if(@manualPosition < -@slideWidth/3)

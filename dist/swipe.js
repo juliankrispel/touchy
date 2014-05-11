@@ -28,6 +28,7 @@
       this.transitionInProgress = false;
       this.swipe = document.querySelector(containerSelector);
       this.swipeWrap = document.querySelector(wrapSelector);
+      this.swiped = trx.createStream();
       this.slides = [];
       _ref = document.querySelectorAll(itemSelector);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -45,31 +46,43 @@
         slide = _ref1[i];
         slide.style.width = this.slideWidth + 'px';
       }
-      this.currentIndex = 0;
+      this.currentPosition = 0;
+      this._index = 0;
       this.slide(void 0, 0);
       this.swipe.style.visibility = 'visible';
       this.positionContinuously();
       this.transitionEnd = trx.fromDomEvent('webkitTransitionEnd', this.swipe);
       return this.transitionEnd.subscribe(function() {
-        this.transitionInProgress = false;
-        return self.positionContinuously();
+        self.transitionInProgress = false;
+        self.positionContinuously();
+        return self.swiped.publish(self.currentPosition);
       });
     };
 
     Swiper.prototype.prev = function() {
-      if (this.currentIndex <= 0) {
-        this.currentIndex = this.slides.length - 1;
+      if (this._index <= 0) {
+        this._index = this.slides.length - 1;
       } else {
-        this.currentIndex--;
+        this._index--;
+      }
+      if (this.currentPosition <= 0) {
+        this.currentPosition = this.slides.length - 1;
+      } else {
+        this.currentPosition--;
       }
       return this.slide();
     };
 
     Swiper.prototype.next = function() {
-      if (this.currentIndex >= this.slides.length - 1) {
-        this.currentIndex = 0;
+      if (this._index >= this.slides.length - 1) {
+        this._index = 0;
       } else {
-        this.currentIndex++;
+        this._index++;
+      }
+      if (this.currentPosition >= this.slides.length - 1) {
+        this.currentPosition = 0;
+      } else {
+        this.currentPosition++;
       }
       return this.slide();
     };
@@ -83,7 +96,7 @@
     Swiper.prototype.move = function(index, speed) {
       var i, slide, _i, _len, _ref, _results;
       if (index == null) {
-        index = this.currentIndex;
+        index = this._index;
       }
       _ref = this.slides;
       _results = [];
@@ -98,16 +111,16 @@
       var first, firstSlide, last, lastSlide;
       last = this.slides.length - 1;
       first = 0;
-      if (this.currentIndex === last) {
+      if (this._index === last) {
         firstSlide = this.slides.shift();
         this.slides.push(firstSlide);
-        this.currentIndex--;
-        return this.move(this.currentIndex, 0);
-      } else if (this.currentIndex === first) {
+        this._index--;
+        return this.move(this._index, 0);
+      } else if (this._index === first) {
         lastSlide = this.slides.pop();
-        this.currentIndex++;
+        this._index++;
         this.slides.unshift(lastSlide);
-        return this.move(this.currentIndex, 0);
+        return this.move(this._index, 0);
       }
     };
 
@@ -121,7 +134,7 @@
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         slide = _ref[i];
-        _results.push(this.translate(i, i * this.slideWidth - (this.currentIndex * this.slideWidth) - this.manualPosition, 0));
+        _results.push(this.translate(i, i * this.slideWidth - (this._index * this.slideWidth) - this.manualPosition, 0));
       }
       return _results;
     };
