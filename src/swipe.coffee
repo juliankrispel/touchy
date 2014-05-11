@@ -33,40 +33,31 @@ module.exports = class Swiper
         @transitionEnd.subscribe(()->
             self.transitionInProgress = false
             self.positionContinuously()
-            self.swiped.publish(self.currentPosition)
+        )
+        @swiped.subscribe((e)->
+            console.log('position', e)
         )
 
     prev: () ->
+        @setPositionRelative(-1)
         if(@_index <= 0)
-            @_index = @slides.length - 1
+            @move(@slides.length - 1)
         else
-            @_index--
-
-        if(@currentPosition <= 0)
-            @currentPosition = @slides.length - 1
-        else
-            @currentPosition--
-
-        @slide()
+            @move(@_index - 1)
 
     next: () ->
+        @setPositionRelative(1)
         if(@_index >= @slides.length - 1)
-            @_index = 0
+            @move(0)
         else
-            @_index++
-
-        if(@currentPosition >= @slides.length - 1)
-            @currentPosition = 0
-        else
-            @currentPosition++
-
-        @slide()
+            @move(@_index + 1)
 
     slide: (index, speed)->
         self = @
         self.move(index, speed)
 
     move: (index = @_index, speed)=>
+        @_index = index
         for slide, i in @slides
             @translate(i, i*@slideWidth - (index*@slideWidth), speed)
 
@@ -76,13 +67,11 @@ module.exports = class Swiper
         if(@_index == last)
             firstSlide = @slides.shift()
             @slides.push(firstSlide)
-            @_index--
-            @move(@_index, 0)
+            @move(@_index - 1, 0)
         else if(@_index == first)
             lastSlide = @slides.pop()
-            @_index++
             @slides.unshift(lastSlide)
-            @move(@_index, 0)
+            @move(@_index + 1, 0)
 
     moveRel: (dist)->
         if(@transitionInProgress)
@@ -91,6 +80,30 @@ module.exports = class Swiper
         @manualPosition+=dist
         for slide, i in @slides
             @translate(i, i*@slideWidth - (@_index*@slideWidth) - @manualPosition, 0)
+
+    setPositionRelative: (moveRel) =>
+        target = @currentPosition + moveRel
+        lastSlide = @slides.length - 1
+        if(target > lastSlide)
+            target = target - lastSlide - 1
+        else if (target < 0)
+            target = lastSlide - target + 1
+
+        @currentPosition = target
+        @swiped.publish(@currentPosition)
+
+    slideTo: (num) =>
+        if(!num)
+            return
+        moveTo = @_index + (num - @currentPosition)
+        lastSlide = @slides.length - 1
+        @setPositionRelative(num - @currentPosition)
+        if(moveTo > lastSlide)
+            moveTo = moveTo - lastSlide - 1
+        else if (moveTo < 0)
+            moveTo = lastSlide + moveTo
+            
+        @move(moveTo)
 
     letGo: ()=>
         if(@manualPosition > @slideWidth/7)
