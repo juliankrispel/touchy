@@ -53,12 +53,9 @@
       this.swipe.style.visibility = 'visible';
       this.positionContinuously();
       this.transitionEnd = trx.fromDomEvent('webkitTransitionEnd', this.swipe);
-      this.transitionEnd.subscribe(function() {
+      return this.transitionEnd.subscribe(function() {
         self.transitionInProgress = false;
         return self.positionContinuously();
-      });
-      return this.swiped.subscribe(function(e) {
-        return console.log('position', e);
       });
     };
 
@@ -145,19 +142,23 @@
     };
 
     Swiper.prototype.slideTo = function(num) {
-      var lastSlide, moveTo;
-      if (isNaN(num)) {
+      var lastSlide, moveBy, moveTo, self;
+      if (typeof num !== 'number') {
         return;
       }
-      moveTo = this._index + (num - this.currentPosition);
+      self = this;
+      moveBy = num - this.currentPosition;
+      if (moveBy === 0) {
+        return;
+      }
+      moveTo = this._index + moveBy;
       lastSlide = this.slides.length - 1;
-      this.setPositionRelative(num - this.currentPosition);
       if (moveTo > lastSlide) {
         moveTo = moveTo - lastSlide - 1;
       } else if (moveTo < 0) {
-        moveTo = lastSlide - moveTo - 1;
+        moveTo = moveTo + lastSlide + 1;
       }
-      console.log('moveTo', moveTo);
+      this.setPositionRelative(moveBy);
       return this.move(moveTo);
     };
 

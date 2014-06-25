@@ -89,16 +89,23 @@ module.exports = class Swiper
         @swiped.publish(@currentPosition)
 
     slideTo: (num) =>
-        if(isNaN(num))
+        if(typeof num != 'number')
             return
-        moveTo = @_index + (num - @currentPosition)
+
+        self = @
+        moveBy = num - @currentPosition
+        if(moveBy == 0)
+            return
+
+        moveTo = @_index + moveBy
         lastSlide = @slides.length - 1
-        @setPositionRelative(num - @currentPosition)
         if(moveTo > lastSlide)
             moveTo = moveTo - lastSlide - 1
         else if (moveTo < 0)
-            moveTo = lastSlide - moveTo - 1
-            
+            moveTo = moveTo + lastSlide + 1
+
+        @setPositionRelative(moveBy)
+
         @move(moveTo)
 
     letGo: ()=>

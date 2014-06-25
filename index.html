@@ -55,8 +55,8 @@ button{
 </style>
 </head>
 <body class="touchy">
-<button>1</button>
-<button>2</button>
+<button class="btn">1</button>
+<button class="btn">2</button>
 <h2 class="debug0"></h2>
 <h2 class="debug1"></h2>
 <h2 class="debug2"></h2>
@@ -96,6 +96,13 @@ button{
     <script>
         var t = new Touchy();
         t.bindEvents();
+        var btns = document.querySelectorAll('.btn');
+        for (var i = 0 ; i < btns.length; i++){
+            btns[i].addEventListener('click', function(e){
+                console.log(this.textContent);
+                t.swiper.slideTo(parseInt(this.textContent)-1);
+            });
+        }
     </script>
 </body>
 </html>
